@@ -34,5 +34,22 @@ pipeline {
                 }
             }
         }
+        stage("confirm deploy") {
+            steps {
+                input "deploy to production?"
+            }
+        }
     }
+}
+
+def publishRobot() {
+    step([
+        $class : 'RobotPublisher',
+        outputPath : 'test',
+        outputFileName : "*.xml",
+        disableArchiveOutput : false,
+        passThreshold : 100,
+        unstableThreshold: 95.0,
+        otherFiles : "*.png",
+    ])
 }
