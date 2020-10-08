@@ -17,5 +17,22 @@ pipeline {
                 }
             }
         }
+        stage("deploy to staging") {
+            steps {
+                sshagent(['deploy-key']) {
+                    sh("./ci/deploy.sh web_test")
+                }
+            }
+        }
+        stage("acceptance tests") {
+            steps {
+                sh("test/run.sh web_test")
+            }
+            post {
+                always {
+                    publishRobot()
+                }
+            }
+        }
     }
 }
