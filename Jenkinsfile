@@ -1,9 +1,16 @@
 pipeline {
-    agent any
+    agent {
+        label "python3"
+    }
     stages {
-        stage("Hello World") {
-            steps{
-                echo "Hello World!"
+       stage("flake8") {
+            steps {
+                sh("flake8 src/*.py")
+            }
+        }
+        stage("rflint") {
+            steps {
+                sh("python3 -m rflint test/*.robot")
             }
         }
     }
