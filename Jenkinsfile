@@ -39,6 +39,23 @@ pipeline {
                 input "deploy to production?"
             }
         }
+        stage("deploy to production") {
+            steps {
+                sshagent(['deploy-key']) {
+                    sh("./ci/deploy.sh web_prod")
+                }
+            }
+        }
+        stage("deployment tests") {
+            steps {
+                sh("test/run.sh web_prod")
+            }
+            post {
+                always {
+                    publishRobot()
+                }
+            }
+        }
     }
 }
 
