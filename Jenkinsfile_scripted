@@ -1,0 +1,50 @@
+def publishRobot() {
+    step([
+        $class : 'RobotPublisher',
+        outputPath : 'test',
+        outputFileName : "*.xml",
+        disableArchiveOutput : false,
+        passThreshold : 100,
+        unstableThreshold: 95.0,
+        otherFiles : "*.png",
+    ])
+}
+
+def robotTest(host) {
+    try {
+        sh("test/run.sh ${host}")
+    } finally {
+        publishRobot()
+    }
+}
+
+def deploy(host) {
+    sshagent(['deploy-key']) {
+        sh("./ci/deploy.sh ${host}")
+    }
+}
+
+node("python3") {
+    stage("static_analysis") {
+        def analyzers = [
+            "flake8": { sh("flake8 src/*.py") },
+            "rflint": { sh("python3 -m rflint test/*.robot") }
+        ]
+        parallel(analyzers)
+    }
+    stage("deploy to staging") {
+        deploy("web_test")
+    }
+    stage("acceptance tests") {
+        robotTest("web_test")
+    }
+    stage("confirm deploy") {
+        input "deploy to production?"
+    }
+    stage("deploy to production") {
+        deploy("web_prod")
+    }
+    stage("deployment tests") {
+        robotTest("web_prod")
+    }
+}
